@@ -1,0 +1,99 @@
+-- CREATE DATABASE project
+
+USE project;
+
+CREATE TABLE Dealerzy
+(
+    ID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Nazwa VARCHAR(30) NOT NULL,
+    Adres VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE Marki
+(
+    ID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Nazwa VARCHAR(30) NOT NULL UNIQUE
+);
+
+CREATE TABLE Modele
+(
+    ID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Nazwa VARCHAR(30) NOT NULL UNIQUE,
+	Marka INT NOT NULL FOREIGN KEY REFERENCES Marki(ID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE Klienci (
+    NumerKontrahenta INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Imie VARCHAR(30) NOT NULL,
+    Nazwisko VARCHAR(30) NOT NULL,
+    NumerTelefonu VARCHAR(9) NOT NULL CHECK (LEN(NumerTelefonu) = 9),
+    NIP VARCHAR(10) CHECK (LEN(NIP) = 10 OR NIP IS NULL)
+);
+
+CREATE TABLE Paliwa
+(
+    ID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Typ VARCHAR(20) NOT NULL UNIQUE
+);
+
+INSERT INTO Paliwa (Typ) VALUES 
+('benzyna'),
+('diesel'),
+('elektryczny'),
+('hybryda');
+
+CREATE TABLE Silniki
+(
+    Oznaczenie VARCHAR(8) NOT NULL PRIMARY KEY,
+    Pojemnosc INT CHECK (Pojemnosc BETWEEN 1 AND 16001),
+    Moc INT NOT NULL CHECK (Moc BETWEEN 1 AND 2000),
+	Paliwo INT NOT NULL FOREIGN KEY REFERENCES Paliwa(ID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE Nadwozia (
+    ID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Typ VARCHAR(20) UNIQUE
+);
+
+INSERT INTO Nadwozia (Typ) VALUES 
+('SUV'),
+('hatchback'),
+('liftback'),
+('sedan'),
+('kombi'),
+('coupe'),
+('van'),
+('minivan'),
+('kabriolet');
+
+CREATE TABLE Zamowienia (
+    NumerZamowienia INT IDENTITY(1,1) PRIMARY KEY NOT NULL,
+    DataZlozenia DATE NOT NULL,
+    Zaliczka INT NOT NULL,
+    PrzewidywanyCzasDostawy DATE NOT NULL,
+    Kwota INT NOT NULL,
+	Zamawiajacy INT NOT NULL FOREIGN KEY REFERENCES Klienci(NumerKontrahenta) ON UPDATE CASCADE ON DELETE CASCADE,
+);
+
+CREATE TABLE Samochody (
+    VIN VARCHAR(17) NOT NULL PRIMARY KEY CHECK(LEN(VIN)=17),
+    KodLakieru VARCHAR(4) CHECK(LEN(KodLakieru)=3 OR LEN(KodLakieru)=4) NOT NULL,
+    KrajPochodzenia VARCHAR(30) NOT NULL,
+    Rocznik INT CHECK (Rocznik BETWEEN 1900 AND 2100) NOT NULL,
+    Generacja DECIMAL(5, 1) NOT NULL,
+    Przebieg INT NOT NULL,
+	Model INT NOT NULL FOREIGN KEY REFERENCES Modele(ID) ON UPDATE CASCADE ON DELETE CASCADE,
+	Silnik VARCHAR(8) NOT NULL FOREIGN KEY REFERENCES Silniki(Oznaczenie),
+	Nadwozie INT NOT NULL FOREIGN KEY REFERENCES Nadwozia(ID),
+	Dealer INT FOREIGN KEY REFERENCES Dealerzy(ID) ON UPDATE CASCADE ON DELETE CASCADE,
+	Zamowienie INT FOREIGN KEY REFERENCES Zamowienia(NumerZamowienia),
+	Wlasciciel INT FOREIGN KEY REFERENCES Klienci(NumerKontrahenta)
+);
+
+CREATE TABLE JazdyTestowe (
+    VIN VARCHAR(17)NOT NULL FOREIGN KEY REFERENCES Samochody(VIN) ON UPDATE CASCADE ON DELETE CASCADE,
+    NumerKontrahenta INT NOT NULL FOREIGN KEY REFERENCES Klienci(NumerKontrahenta) ON UPDATE CASCADE ON DELETE CASCADE,
+    DataJazdy DATETIME NOT NULL,
+    Kaucja INT NOT NULL,
+    PRIMARY KEY (DataJazdy, VIN, NumerKontrahenta)
+);
